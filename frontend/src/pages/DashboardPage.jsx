@@ -55,14 +55,21 @@ export function DashboardPage() {
   }
 
   useEffect(() => {
-    fetchPedidos()
-    fetchAlertasIA()
+    const timerInit = setTimeout(() => {
+      fetchPedidos()
+      fetchAlertasIA()
+    }, 0)
+
     // Atualiza automaticamente a cada 30 segundos
     const interval = setInterval(() => {
       fetchPedidos()
       fetchAlertasIA()
     }, 30000)
-    return () => clearInterval(interval)
+
+    return () => {
+      clearTimeout(timerInit)
+      clearInterval(interval)
+    }
   }, [])
 
   // Calculate metrics
