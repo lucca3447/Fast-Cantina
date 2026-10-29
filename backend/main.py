@@ -24,6 +24,7 @@ from models.usuario_model import Usuario
 from routers.auth_router import router as auth_router
 from routers.cantina_router import router as cantina_router
 from routers.categoria_router import router as categoria_router
+from routers.demo_router import router as demo_router
 from routers.estoque_router import router as estoque_router
 from routers.fornecedor_produto_router import router as fornecedor_produto_router
 from routers.fornecedor_router import router as fornecedor_router
@@ -68,6 +69,7 @@ app.include_router(pedido_router)
 app.include_router(item_pedido_router)
 app.include_router(fornecedor_produto_router)
 app.include_router(previsao_router)
+app.include_router(demo_router)
 
 
 @app.get("/")

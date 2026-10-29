@@ -1,20 +1,24 @@
 import { useState } from 'react'
 import { useLocation, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
-import { KeyRound, User, Loader2, ArrowRight } from 'lucide-react'
+import { api } from '../services/api'
+import { KeyRound, User, Loader2, ArrowRight, RotateCcw, CheckCircle2 } from 'lucide-react'
 
 export function LoginPage() {
-  const { login } = useAuth()
+  const { login, loginDemo } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [form, setForm] = useState({ login: '', senha: '' })
   const [loading, setLoading] = useState(false)
+  const [resetting, setResetting] = useState(false)
+  const [resetSuccess, setResetSuccess] = useState('')
   const [error, setError] = useState('')
 
   async function handleSubmit(event) {
     event.preventDefault()
     setLoading(true)
     setError('')
+    setResetSuccess('')
 
     try {
       await login(form.login, form.senha)
@@ -24,8 +28,8 @@ export function LoginPage() {
       const detail = requestError.response?.data?.detail
       if (Array.isArray(detail)) {
         setError(detail.map(err => {
-          const field = err.loc && err.loc.length > 0 ? err.loc[err.loc.length - 1] : 'Erro';
-          return `${field}: ${err.msg}`;
+          const field = err.loc && err.loc.length > 0 ? err.loc[err.loc.length - 1] : 'Erro'
+          return `${field}: ${err.msg}`
         }).join(' | '))
       } else if (typeof detail === 'string') {
         setError(detail)
@@ -34,6 +38,51 @@ export function LoginPage() {
       }
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function handleDemoLogin(perfil = 'admin') {
+    setLoading(true)
+    setError('')
+    setResetSuccess('')
+
+    const emailMap = {
+      admin: 'admin@fastcantina.com',
+      gerente: 'gerente@fastcantina.com',
+      funcionario: 'atendente@fastcantina.com',
+    }
+    const email = emailMap[perfil] || 'admin@fastcantina.com'
+    setForm({ login: email, senha: 'password' })
+
+    try {
+      await loginDemo(perfil)
+      const next = location.state?.from?.pathname || (perfil === 'funcionario' ? '/pedidos' : '/dashboard')
+      navigate(next, { replace: true })
+    } catch (requestError) {
+      const detail = requestError.response?.data?.detail
+      setError(typeof detail === 'string' ? detail : 'Falha ao acessar cantina de demonstração.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleResetDemo() {
+    if (!window.confirm('Deseja restaurar a cantina de demonstração para o estado original? Isso recriará os produtos, estoque e pedidos padrão de teste.')) {
+      return
+    }
+
+    setResetting(true)
+    setError('')
+    setResetSuccess('')
+
+    try {
+      const response = await api.post('/demo/reset')
+      setResetSuccess(response.data?.mensagem || 'Banco de demonstração restaurado com sucesso!')
+    } catch (err) {
+      const detail = err.response?.data?.detail
+      setError(typeof detail === 'string' ? detail : 'Falha ao restaurar cantina de demonstração. Aguarde 1 minuto.')
+    } finally {
+      setResetting(false)
     }
   }
 
@@ -62,8 +111,10 @@ export function LoginPage() {
         </div>
 
         <div className="relative z-10 text-sm text-brand-200">
-          <p> Aviso: Este sistema foi desenvolvido para fins de demonstração e portfólio. Os dados apresentados são fictícios e não representam informações reais.
-           Por se tratar de um ambiente de demonstração, os dados cadastrados podem ser alterados, removidos ou perdidos a qualquer momento, sem aviso prévio.</p>
+          <p>
+            Aviso: Este sistema foi desenvolvido para fins de demonstração e portfólio. Os dados apresentados são fictícios e não representam informações reais.
+            Por se tratar de um ambiente de demonstração, os dados cadastrados podem ser alterados, removidos ou perdidos a qualquer momento, sem aviso prévio.
+          </p>
         </div>
       </div>
 
@@ -97,12 +148,12 @@ export function LoginPage() {
                   minLength={3}
                   maxLength={50}
                   required
-                  placeholder="Seu nome de usuário"
+                  placeholder="Seu nome de usuário ou e-mail"
                   value={form.login}
                   onChange={(event) =>
                     setForm((prev) => ({ ...prev, login: event.target.value }))
                   }
-                  
+                  className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-11 pr-4 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10"
                 />
               </div>
             </div>
@@ -126,7 +177,7 @@ export function LoginPage() {
                   onChange={(event) =>
                     setForm((prev) => ({ ...prev, senha: event.target.value }))
                   }
-                  
+                  className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-11 pr-4 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10"
                 />
               </div>
             </div>
@@ -139,8 +190,8 @@ export function LoginPage() {
 
             <button
               type="submit"
-              disabled={loading}
-              className="group flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-brand-500/30 transition-all hover:bg-brand-700 focus:ring-4 focus:ring-brand-500/20 disabled:cursor-not-allowed disabled:opacity-70"
+              disabled={loading || resetting}
+              className="group flex w-full items-center justify-center gap-2 rounded-xl bg-brand-600 px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-brand-500/30 transition-all hover:bg-brand-700 focus:ring-4 focus:ring-brand-500/20 disabled:cursor-not-allowed disabled:opacity-70 cursor-pointer"
             >
               {loading ? (
                 <>
@@ -155,6 +206,73 @@ export function LoginPage() {
               )}
             </button>
           </form>
+
+          {/* Divisor Demo */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-slate-200"></div>
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-slate-50 px-3 text-slate-400 text-[11px] font-bold tracking-wider">
+                Acesso Rápido para Demonstração
+              </span>
+            </div>
+          </div>
+
+          {/* Botões de Acesso Rápido (1 clique) */}
+          <div className="grid grid-cols-3 gap-2">
+            <button
+              type="button"
+              disabled={loading || resetting}
+              onClick={() => handleDemoLogin('admin')}
+              className="group flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white p-2.5 text-center transition-all hover:border-brand-500 hover:bg-brand-50/50 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
+            >
+              <span className="text-xs font-semibold text-slate-800 group-hover:text-brand-700">👤 Admin</span>
+              <span className="mt-0.5 text-[9px] text-slate-400 font-medium">Acesso total</span>
+            </button>
+
+            <button
+              type="button"
+              disabled={loading || resetting}
+              onClick={() => handleDemoLogin('gerente')}
+              className="group flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white p-2.5 text-center transition-all hover:border-brand-500 hover:bg-brand-50/50 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
+            >
+              <span className="text-xs font-semibold text-slate-800 group-hover:text-brand-700">👔 Gerente</span>
+              <span className="mt-0.5 text-[9px] text-slate-400 font-medium">Gestão</span>
+            </button>
+
+            <button
+              type="button"
+              disabled={loading || resetting}
+              onClick={() => handleDemoLogin('funcionario')}
+              className="group flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white p-2.5 text-center transition-all hover:border-brand-500 hover:bg-brand-50/50 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
+            >
+              <span className="text-xs font-semibold text-slate-800 group-hover:text-brand-700">👥 Atendente</span>
+              <span className="mt-0.5 text-[9px] text-slate-400 font-medium">PDV/Cozinha</span>
+            </button>
+          </div>
+
+          {/* Feedback de Sucesso da Restauração */}
+          {resetSuccess ? (
+            <div className="mt-3 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs font-medium text-emerald-700">
+              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+              <span>{resetSuccess}</span>
+            </div>
+          ) : null}
+
+          {/* Botão para Restaurar Banco de Dados Demo */}
+          <div className="pt-3 text-center">
+            <button
+              type="button"
+              disabled={loading || resetting}
+              onClick={handleResetDemo}
+              className="inline-flex items-center gap-1.5 text-[11px] text-slate-500 hover:text-brand-600 transition-colors disabled:opacity-50 cursor-pointer"
+              title="Restaura os dados originais da cantina de demonstração"
+            >
+              <RotateCcw className={`h-3 w-3 ${resetting ? 'animate-spin' : ''}`} />
+              <span>{resetting ? 'Restaurando dados demo...' : 'Restaurar dados de teste padrão'}</span>
+            </button>
+          </div>
           
           <div className="mt-8 text-center">
             <Link to="/registrar" className="text-sm font-medium text-slate-600 hover:text-brand-600 transition-colors">
