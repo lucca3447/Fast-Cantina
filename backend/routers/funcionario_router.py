@@ -32,7 +32,7 @@ def criar_funcionario(
 @router.get("/", response_model=list[FuncionarioResponse])
 def listar_funcionarios(
     db: Session = Depends(get_db), current_user: Usuario = Depends(get_current_user),
-    _: object = Depends(require_roles("admin", "gerente"))
+    _: object = Depends(require_roles("admin", "gerente", "funcionario"))
 ):
     service = FuncionarioService(db, current_user.id_cantina)
     return service.listar()
