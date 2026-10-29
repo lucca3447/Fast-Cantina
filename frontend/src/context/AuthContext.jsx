@@ -26,6 +26,11 @@ export function AuthProvider({ children }) {
     return fetchMe()
   }
 
+  async function loginDemo(perfil = 'admin') {
+    await api.post('/auth/demo', { perfil })
+    return fetchMe()
+  }
+
   async function logout() {
     try {
       await api.post('/auth/logout')
@@ -81,6 +86,7 @@ export function AuthProvider({ children }) {
     loading,
     isAuthenticated,
     login,
+    loginDemo,
     logout,
     fetchMe,
     hasAnyRole,

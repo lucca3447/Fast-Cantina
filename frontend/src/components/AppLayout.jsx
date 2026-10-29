@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
+import { api } from '../services/api'
 import { 
   LayoutDashboard, 
   Tags, 
@@ -11,7 +13,8 @@ import {
   Archive, 
   Link2, 
   LogOut,
-  Coffee
+  Coffee,
+  RotateCcw
 } from 'lucide-react'
 
 function navClassName({ isActive }) {
@@ -30,10 +33,29 @@ function iconClassName({ isActive }) {
 export function AppLayout() {
   const { user, logout, hasAnyRole } = useAuth()
   const navigate = useNavigate()
+  const [resetting, setResetting] = useState(false)
+
+  const isDemoUser = user?.login === 'admin@fastcantina.com' || user?.login === 'atendente@fastcantina.com'
 
   async function handleLogout() {
     await logout()
     navigate('/login', { replace: true })
+  }
+
+  async function handleResetDemo() {
+    if (!window.confirm('Deseja restaurar a cantina de demonstração para o estado original de teste? Isso redefinirá pedidos, estoque e produtos de exemplo.')) {
+      return
+    }
+
+    setResetting(true)
+    try {
+      await api.post('/demo/reset')
+      window.location.reload()
+    } catch {
+      alert('Falha ao restaurar dados de demonstração. Aguarde 1 minuto e tente novamente.')
+    } finally {
+      setResetting(false)
+    }
   }
 
   const canManage = hasAnyRole(['admin', 'gerente'])
@@ -111,10 +133,24 @@ export function AppLayout() {
                 <p className="truncate text-xs font-medium text-brand-400 capitalize">{user?.perfil}</p>
               </div>
             </div>
+
+            {isDemoUser && (
+              <button
+                type="button"
+                disabled={resetting}
+                onClick={handleResetDemo}
+                className="mb-2 flex w-full items-center justify-center gap-2 rounded-lg bg-amber-950/70 border border-amber-800/80 px-3 py-2 text-xs font-semibold text-amber-300 transition-colors hover:bg-amber-900/80 hover:text-amber-200 disabled:opacity-50 cursor-pointer"
+                title="Restaura os dados originais da cantina de demonstração"
+              >
+                <RotateCcw className={`h-3.5 w-3.5 ${resetting ? 'animate-spin' : ''}`} />
+                <span>{resetting ? 'Restaurando...' : 'Resetar Dados Demo'}</span>
+              </button>
+            )}
+
             <button
               type="button"
               onClick={handleLogout}
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-900 border border-brand-800 px-3 py-2 text-sm font-medium text-red-400 transition-colors hover:bg-red-950 hover:border-red-900 hover:text-red-300"
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-900 border border-brand-800 px-3 py-2 text-sm font-medium text-red-400 transition-colors hover:bg-red-950 hover:border-red-900 hover:text-red-300 cursor-pointer"
             >
               <LogOut className="h-4 w-4" />
               Sair da conta
