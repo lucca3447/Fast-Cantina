@@ -4,17 +4,28 @@ from datetime import datetime
 
 class PedidoCreate(BaseModel):
     id_funcionario: int
-    valor_total: Decimal= Field(..., ge=0)
+    valor_total: Decimal = Field(..., ge=0)
     status: str = "pendente"
 
 
 class PedidoUpdate(BaseModel):
     id_funcionario: int
-    valor_total: Decimal= Field(..., ge=0)
+    valor_total: Decimal = Field(..., ge=0)
     status: str = "pendente"
 
 class PedidoStatusUpdate(BaseModel):
     status: str
+
+
+class ItemPedidoSimplesResponse(BaseModel):
+    id_item_pedido: int
+    id_produto: int
+    quantidade: int
+    subtotal: Decimal
+
+    class Config:
+        from_attributes = True
+
 
 class PedidoResponse(BaseModel):
     id_nota_fiscal: int
@@ -22,6 +33,7 @@ class PedidoResponse(BaseModel):
     valor_total: Decimal 
     data_hora: datetime
     status: str
+    itens: list[ItemPedidoSimplesResponse] = []
 
     class Config:
         from_attributes = True
