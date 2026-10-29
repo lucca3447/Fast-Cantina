@@ -1,5 +1,7 @@
+from typing import Literal
 from fastapi import APIRouter, Depends, Request, Response
 from fastapi.security import OAuth2PasswordRequestForm
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from core.auth_dependencies import get_current_user
@@ -15,8 +17,13 @@ from schemas.auth_schema import (
 )
 from schemas.usuario_schema import UsuarioResponse
 from services.auth_service import AuthService, REFRESH_TOKEN_EXPIRE_DAYS
+from services.demo_service import DemoService
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
+
+
+class DemoLoginRequest(BaseModel):
+    perfil: Literal["admin", "funcionario"] = "admin"
 
 
 def _set_auth_cookies(response: Response, tokens: dict):
@@ -52,6 +59,21 @@ def _clear_auth_cookies(response: Response):
 def login(request: Request, response: Response, payload: LoginRequest, db: Session = Depends(get_db)):
     service = AuthService(db)
     tokens = service.login(payload.login, payload.senha)
+    _set_auth_cookies(response, tokens)
+    return tokens
+
+
+@router.post("/demo", response_model=TokenResponse)
+@limiter.limit("10/minute")
+def login_demo(
+    request: Request,
+    response: Response,
+    payload: DemoLoginRequest | None = None,
+    db: Session = Depends(get_db),
+):
+    perfil = payload.perfil if payload else "admin"
+    demo_service = DemoService(db)
+    tokens = demo_service.autenticar_demo(perfil=perfil)
     _set_auth_cookies(response, tokens)
     return tokens
 

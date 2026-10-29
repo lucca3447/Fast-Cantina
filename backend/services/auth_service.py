@@ -4,9 +4,8 @@ from uuid import uuid4
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
-from core.security import criar_access_token, decodificar_token, gerar_hash_senha, verificar_senha
+from core.security import criar_access_token, decodificar_token, verificar_senha
 from repositories.refresh_token_repository import RefreshTokenRepository
-from repositories.usuario_repository import UsuarioRepository
 from repositories.usuario_repository import UsuarioRepository
 
 REFRESH_TOKEN_EXPIRE_DAYS = 7
@@ -17,15 +16,7 @@ class AuthService:
         self.usuario_repository = UsuarioRepository(db)
         self.refresh_token_repository = RefreshTokenRepository(db)
 
-
-    def login(self, login: str, senha: str):
-        usuario = self.usuario_repository.buscar_por_login(login)
-        if not usuario or not verificar_senha(senha, usuario.senha_hash):
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Login ou senha invalidos",
-            )
-
+    def gerar_tokens_usuario(self, usuario):
         if not usuario.ativo:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -65,6 +56,16 @@ class AuthService:
             "refresh_token": refresh_token,
             "token_type": "bearer",
         }
+
+    def login(self, login: str, senha: str):
+        usuario = self.usuario_repository.buscar_por_login(login)
+        if not usuario or not verificar_senha(senha, usuario.senha_hash):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Login ou senha invalidos",
+            )
+
+        return self.gerar_tokens_usuario(usuario)
 
     def refresh(self, refresh_token: str):
         payload = decodificar_token(refresh_token)
