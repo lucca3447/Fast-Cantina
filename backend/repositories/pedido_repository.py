@@ -14,12 +14,14 @@ class PedidoRepository:
 
     def buscar_por_id(self, id_nota_fiscal: int):
         return self.db.query(Pedido).filter(
-            Pedido.id_nota_fiscal == id_nota_fiscal
+            Pedido.id_nota_fiscal == id_nota_fiscal,
+            Pedido.id_cantina == self.id_cantina
         ).first()
 
     def buscar_por_funcionario(self, id_funcionario: int):
         return self.db.query(Pedido).filter(
-            Pedido.id_funcionario == id_funcionario
+            Pedido.id_funcionario == id_funcionario,
+            Pedido.id_cantina == self.id_cantina
         ).all()
 
     def criar(self, pedido: PedidoCreate):

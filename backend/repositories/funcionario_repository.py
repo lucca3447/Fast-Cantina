@@ -20,7 +20,8 @@ class FuncionarioRepository:
 
     def buscar_por_nome(self, nome: str):
         return self.db.query(Funcionario).filter(
-            Funcionario.nome == nome
+            Funcionario.nome == nome,
+            Funcionario.id_cantina == self.id_cantina
         ).first()
 
     def criar(self, funcionario: FuncionarioCreate):
