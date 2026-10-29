@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from models.produto_model import Produto
+from models.estoque_model import Estoque
 from schemas.produto_schema import ProdutoCreate, ProdutoUpdate
 
 
@@ -33,6 +34,14 @@ class ProdutoRepository:
         )
 
         self.db.add(novo_produto)
+        self.db.flush()
+
+        novo_estoque = Estoque(
+            id_produto=novo_produto.id_produto,
+            quantidade_estoque=0
+        )
+        self.db.add(novo_estoque)
+
         self.db.commit()
         self.db.refresh(novo_produto)
 
