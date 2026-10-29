@@ -23,7 +23,7 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
 class DemoLoginRequest(BaseModel):
-    perfil: Literal["admin", "funcionario"] = "admin"
+    perfil: Literal["admin", "gerente", "funcionario"] = "admin"
 
 
 def _set_auth_cookies(response: Response, tokens: dict):

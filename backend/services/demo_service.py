@@ -20,6 +20,7 @@ from services.auth_service import AuthService
 DEMO_CNPJ = "00000000000100"
 DEMO_CANTINA_NOME = "Cantina Modelo (Demo)"
 DEMO_ADMIN_LOGIN = "admin@fastcantina.com"
+DEMO_MANAGER_LOGIN = "gerente@fastcantina.com"
 DEMO_OPERATOR_LOGIN = "atendente@fastcantina.com"
 DEMO_PASSWORD = "password"
 
@@ -31,17 +32,23 @@ class DemoService:
     def garantir_cantina_demo(self) -> Cantina:
         cantina = self.db.query(Cantina).filter(Cantina.cnpj == DEMO_CNPJ).first()
         admin = self.db.query(Usuario).filter(Usuario.login == DEMO_ADMIN_LOGIN).first()
+        gerente = self.db.query(Usuario).filter(Usuario.login == DEMO_MANAGER_LOGIN).first()
         operador = self.db.query(Usuario).filter(Usuario.login == DEMO_OPERATOR_LOGIN).first()
 
-        if not cantina or not admin or not operador:
+        if not cantina or not admin or not gerente or not operador:
             self.resetar_dados_demo()
             cantina = self.db.query(Cantina).filter(Cantina.cnpj == DEMO_CNPJ).first()
 
         return cantina
 
-    def autenticar_demo(self, perfil: Literal["admin", "funcionario"] = "admin"):
+    def autenticar_demo(self, perfil: Literal["admin", "gerente", "funcionario"] = "admin"):
         self.garantir_cantina_demo()
-        login = DEMO_ADMIN_LOGIN if perfil == "admin" else DEMO_OPERATOR_LOGIN
+        login_map = {
+            "admin": DEMO_ADMIN_LOGIN,
+            "gerente": DEMO_MANAGER_LOGIN,
+            "funcionario": DEMO_OPERATOR_LOGIN,
+        }
+        login = login_map.get(perfil, DEMO_ADMIN_LOGIN)
         usuario = self.db.query(Usuario).filter(Usuario.login == login).first()
 
         if not usuario or not usuario.ativo:
@@ -95,6 +102,14 @@ class DemoService:
                 ativo=True,
                 id_cantina=cantina.id_cantina,
             )
+            gerente = Usuario(
+                nome="Gerente FastCantina",
+                login=DEMO_MANAGER_LOGIN,
+                senha_hash=senha_hash,
+                perfil="gerente",
+                ativo=True,
+                id_cantina=cantina.id_cantina,
+            )
             operador = Usuario(
                 nome="Maria Atendente",
                 login=DEMO_OPERATOR_LOGIN,
@@ -103,7 +118,7 @@ class DemoService:
                 ativo=True,
                 id_cantina=cantina.id_cantina,
             )
-            self.db.add_all([admin, operador])
+            self.db.add_all([admin, gerente, operador])
 
             # 2. Funcionários para o PDV
             func_maria = Funcionario(

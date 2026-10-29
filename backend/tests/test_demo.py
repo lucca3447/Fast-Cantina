@@ -15,7 +15,7 @@ from models.pedido_model import Pedido
 from models.produto_model import Produto
 from models.refresh_token_model import RefreshToken
 from models.usuario_model import Usuario
-from services.demo_service import DemoService, DEMO_CNPJ, DEMO_ADMIN_LOGIN, DEMO_OPERATOR_LOGIN
+from services.demo_service import DemoService, DEMO_CNPJ, DEMO_ADMIN_LOGIN, DEMO_MANAGER_LOGIN, DEMO_OPERATOR_LOGIN
 
 
 @pytest.fixture
@@ -50,6 +50,13 @@ def test_garantir_cantina_demo_e_autenticacao(db_session):
     payload_admin = decodificar_token(admin_tokens["access_token"])
     assert payload_admin["perfil"] == "admin"
     assert payload_admin["id_cantina"] == cantina.id_cantina
+
+    # Autenticação de gerente demo
+    gerente_tokens = service.autenticar_demo(perfil="gerente")
+    assert "access_token" in gerente_tokens
+    payload_gerente = decodificar_token(gerente_tokens["access_token"])
+    assert payload_gerente["perfil"] == "gerente"
+    assert payload_gerente["id_cantina"] == cantina.id_cantina
 
     # Autenticação de atendente demo
     func_tokens = service.autenticar_demo(perfil="funcionario")
