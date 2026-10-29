@@ -27,7 +27,7 @@ class UsuarioRepository:
             query = query.filter(Usuario.id_cantina == self.id_cantina)
         return query.first()
 
-    def criar(self, usuario: UsuarioCreate, senha_hash: str, id_cantina: int | None = None):
+    def criar(self, usuario: UsuarioCreate, senha_hash: str, id_cantina: int | None = None, commit: bool = True):
         cantina_id = id_cantina or self.id_cantina
         if cantina_id is None:
             raise ValueError("id_cantina obrigatorio para criar usuario")
@@ -41,8 +41,11 @@ class UsuarioRepository:
             id_cantina=cantina_id,
         )
         self.db.add(novo_usuario)
-        self.db.commit()
-        self.db.refresh(novo_usuario)
+        if commit:
+            self.db.commit()
+            self.db.refresh(novo_usuario)
+        else:
+            self.db.flush()
         return novo_usuario
 
     def atualizar(self, usuario_db: Usuario, usuario: UsuarioUpdate, senha_hash: str | None = None):
