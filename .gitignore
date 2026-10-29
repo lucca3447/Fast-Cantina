@@ -4,3 +4,8 @@ venv
 .postman/
 postman/
 __pycache__/
+
+# Agent instructions
+.agents/
+AGENTS.md
+

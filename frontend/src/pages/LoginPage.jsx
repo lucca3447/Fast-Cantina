@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useLocation, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
-import { Coffee, KeyRound, User, Loader2, ArrowRight } from 'lucide-react'
+import { KeyRound, User, Loader2, ArrowRight } from 'lucide-react'
 
 export function LoginPage() {
   const { login } = useAuth()

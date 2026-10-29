@@ -8,7 +8,6 @@ const INTERVALO_ATUALIZACAO = 10000 // 10 segundos
 export function CozinhaPage() {
   const [pedidosPendentes, setPedidosPendentes] = useState([])
   const [produtos, setProdutos] = useState([])
-  const [itensPorPedido, setItensPorPedido] = useState({})
   const [loading, setLoading] = useState(true)
   const [updatingId, setUpdatingId] = useState(null)
   const [error, setError] = useState('')
@@ -28,28 +27,9 @@ export function CozinhaPage() {
       ])
 
       setProdutos(produtosRes.data)
-
       const pendentes = pedidosRes.data.filter((p) => p.status === 'pendente')
       setPedidosPendentes(pendentes)
-
-      // Fetch items for each pending order
-      const itensMap = {}
-      await Promise.all(
-        pendentes.map(async (pedido) => {
-          try {
-            const itensRes = await api.get(`/pedidos/${pedido.id_nota_fiscal}/itens`)
-            itensMap[pedido.id_nota_fiscal] = itensRes.data
-          } catch (e) {
-            // Se falhar a rota especifica, tenta buscar todos e filtrar (fallback)
-            const todosItensRes = await api.get('/itens-pedido/')
-            itensMap[pedido.id_nota_fiscal] = todosItensRes.data.filter(
-              (i) => i.id_nota_fiscal === pedido.id_nota_fiscal
-            )
-          }
-        })
-      )
-      setItensPorPedido(itensMap)
-    } catch (err) {
+    } catch {
       setError('Erro ao carregar os dados da cozinha. Verifique a conexão com a API.')
     } finally {
       setLoading(false)
@@ -58,20 +38,26 @@ export function CozinhaPage() {
 
   // Auto-refresh logic
   useEffect(() => {
-    loadData()
+    const timerInit = setTimeout(() => {
+      loadData()
+    }, 0)
+
     const timer = setInterval(() => {
       loadData()
     }, INTERVALO_ATUALIZACAO)
-    return () => clearInterval(timer)
+
+    return () => {
+      clearTimeout(timerInit)
+      clearInterval(timer)
+    }
   }, [])
 
   async function marcarComoPronto(idNotaFiscal) {
     setUpdatingId(idNotaFiscal)
     try {
       await api.patch(`/pedidos/${idNotaFiscal}/status`, { status: 'pronto' })
-      // Remover da tela imediatamente para melhor UX
       setPedidosPendentes((prev) => prev.filter((p) => p.id_nota_fiscal !== idNotaFiscal))
-    } catch (err) {
+    } catch {
       alert('Erro ao atualizar o status do pedido.')
     } finally {
       setUpdatingId(null)
@@ -80,7 +66,7 @@ export function CozinhaPage() {
 
   // Filtrar apenas pedidos que tem itens que exigem preparo
   const pedidosComPreparo = pedidosPendentes.map((pedido) => {
-    const itens = itensPorPedido[pedido.id_nota_fiscal] || []
+    const itens = pedido.itens || []
     const itensParaPreparo = itens.filter((item) => {
       const produto = produtosMap.get(item.id_produto)
       return produto?.exige_preparo === true
@@ -90,7 +76,7 @@ export function CozinhaPage() {
       ...pedido,
       itensParaPreparo
     }
-  }).filter((pedido) => pedido.itensParaPreparo.length > 0) // Só mostra se tiver o que preparar
+  }).filter((pedido) => pedido.itensParaPreparo.length > 0)
 
   if (loading && pedidosPendentes.length === 0) {
     return (

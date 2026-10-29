@@ -20,7 +20,8 @@ class FornecedorRepository:
 
     def buscar_por_nome(self, nome: str):
         return self.db.query(Fornecedor).filter(
-            Fornecedor.nome == nome
+            Fornecedor.nome == nome,
+            Fornecedor.id_cantina == self.id_cantina
         ).first()
 
     def buscar_por_cnpj(self, cnpj: str):
