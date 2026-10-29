@@ -46,7 +46,12 @@ export function LoginPage() {
     setError('')
     setResetSuccess('')
 
-    const email = perfil === 'admin' ? 'admin@fastcantina.com' : 'atendente@fastcantina.com'
+    const emailMap = {
+      admin: 'admin@fastcantina.com',
+      gerente: 'gerente@fastcantina.com',
+      funcionario: 'atendente@fastcantina.com',
+    }
+    const email = emailMap[perfil] || 'admin@fastcantina.com'
     setForm({ login: email, senha: 'password' })
 
     try {
@@ -215,25 +220,35 @@ export function LoginPage() {
           </div>
 
           {/* Botões de Acesso Rápido (1 clique) */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-2">
             <button
               type="button"
               disabled={loading || resetting}
               onClick={() => handleDemoLogin('admin')}
-              className="group flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white p-3 text-center transition-all hover:border-brand-500 hover:bg-brand-50/50 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
+              className="group flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white p-2.5 text-center transition-all hover:border-brand-500 hover:bg-brand-50/50 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
             >
               <span className="text-xs font-semibold text-slate-800 group-hover:text-brand-700">👤 Admin</span>
-              <span className="mt-0.5 text-[10px] text-slate-400">Acesso completo</span>
+              <span className="mt-0.5 text-[9px] text-slate-400 font-medium">Acesso total</span>
+            </button>
+
+            <button
+              type="button"
+              disabled={loading || resetting}
+              onClick={() => handleDemoLogin('gerente')}
+              className="group flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white p-2.5 text-center transition-all hover:border-brand-500 hover:bg-brand-50/50 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
+            >
+              <span className="text-xs font-semibold text-slate-800 group-hover:text-brand-700">👔 Gerente</span>
+              <span className="mt-0.5 text-[9px] text-slate-400 font-medium">Gestão</span>
             </button>
 
             <button
               type="button"
               disabled={loading || resetting}
               onClick={() => handleDemoLogin('funcionario')}
-              className="group flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white p-3 text-center transition-all hover:border-brand-500 hover:bg-brand-50/50 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
+              className="group flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white p-2.5 text-center transition-all hover:border-brand-500 hover:bg-brand-50/50 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
             >
               <span className="text-xs font-semibold text-slate-800 group-hover:text-brand-700">👥 Atendente</span>
-              <span className="mt-0.5 text-[10px] text-slate-400">PDV e Cozinha</span>
+              <span className="mt-0.5 text-[9px] text-slate-400 font-medium">PDV/Cozinha</span>
             </button>
           </div>
 

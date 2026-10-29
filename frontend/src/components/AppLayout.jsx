@@ -35,7 +35,10 @@ export function AppLayout() {
   const navigate = useNavigate()
   const [resetting, setResetting] = useState(false)
 
-  const isDemoUser = user?.login === 'admin@fastcantina.com' || user?.login === 'atendente@fastcantina.com'
+  const isDemoUser =
+    user?.login === 'admin@fastcantina.com' ||
+    user?.login === 'gerente@fastcantina.com' ||
+    user?.login === 'atendente@fastcantina.com'
 
   async function handleLogout() {
     await logout()
